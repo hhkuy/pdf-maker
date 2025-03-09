@@ -62,51 +62,34 @@
       box-shadow: 0 5px 15px rgba(0, 123, 255, 0.2);
     }
 
-    /* حقل النص (يتمدّد تلقائياً) */
+    /* حقل النص ثابت الحجم وكبير */
     textarea {
       border-radius: 15px;
-      overflow: hidden; /* لمنع ظهور سكرول داخلي */
-      resize: none;     /* منع المستخدم من تغيير الحجم يدويًا */
+      overflow: hidden;
+      resize: none;
+      height: 500px;
     }
 
-    /* منطقة عرض النتيجة في الصفحة الرئيسية */
+    /* منطقة عرض النتيجة */
     #result {
       margin-top: 30px;
-      background-color: #fff; /* تم تغيير الخلفية إلى الأبيض */
+      background-color: #fff;
       padding: 20px;
       border-radius: 15px;
       border: 1px solid #ddd;
       min-height: 200px;
-      font-size: 14px; /* تصغير حجم النص قليلاً */
+      font-size: 14px;
     }
 
-    /* تنسيق للعناوين والنصوص داخل النتيجة */
-    #result h1 {
-      color: #2e4053;
-    }
-    #result h2 {
-      color: #2874a6;
-    }
-    #result h3 {
-      color: #148f77;
-    }
-    #result h4 {
-      color: #9b59b6;
-    }
-    #result h5, #result h6 {
-      color: #b03a2e;
-    }
-    #result p, #result li, #result td, #result th {
-      color: #2c3e50;
-    }
-    #result strong {
-      color: #6c3483;
-      font-weight: bold;
-    }
-    #result em {
-      color: #d35400;
-      font-style: italic;
-    }
+    /* تنسيقات داخل النتيجة */
+    #result h1 { color: #2e4053; }
+    #result h2 { color: #2874a6; }
+    #result h3 { color: #148f77; }
+    #result h4 { color: #9b59b6; }
+    #result h5, #result h6 { color: #b03a2e; }
+    #result p, #result li, #result td, #result th { color: #2c3e50; }
+    #result strong { color: #6c3483; font-weight: bold; }
+    #result em { color: #d35400; font-style: italic; }
     #result pre,
     #result code {
       background: #e8f0fe;
@@ -124,18 +107,13 @@
       padding: 10px;
       text-align: left;
     }
-    #result table thead {
-      background-color: #f2f2f2;
-    }
+    #result table thead { background-color: #f2f2f2; }
 
-    /* دعم طباعة الخلفيات في بعض المتصفحات */
     @media print {
-      body {
-        -webkit-print-color-adjust: exact;
-      }
+      body { -webkit-print-color-adjust: exact; }
     }
 
-    /* الزر العائم (الأزرار العائمة) */
+    /* الأزرار العائمة */
     .floating-buttons {
       position: fixed;
       top: 50%;
@@ -152,15 +130,12 @@
 
 <!-- أزرار عائمة على يمين الشاشة -->
 <div class="floating-buttons">
-  <!-- زر التحويل -->
   <button class="btn btn-success btn-custom" onclick="convertMarkdown()" title="تحويل الماركداون">
     <i class="bi bi-arrow-left-right"></i>
   </button>
-  <!-- زر الطباعة -->
   <button class="btn btn-dark btn-custom" onclick="printResult()" title="طباعة / PDF">
     <i class="bi bi-printer-fill"></i>
   </button>
-  <!-- زر للتمرير للأعلى/للأسفل -->
   <button class="btn btn-info btn-custom text-white" onclick="toggleScroll()" title="أعلى/أسفل">
     <i class="bi bi-arrow-up-down"></i>
   </button>
@@ -172,15 +147,14 @@
   <!-- حقل إدخال الماركداون -->
   <div class="mb-3">
     <label for="markdown-input" class="form-label">أدخل نص الماركداون هنا:</label>
-    <textarea class="form-control" id="markdown-input" placeholder="اكتب نص الماركداون هنا..." 
-              oninput="autoGrow(this)"></textarea>
+    <textarea class="form-control" id="markdown-input" placeholder="اكتب نص الماركداون هنا..."></textarea>
   </div>
   
-  <!-- أزرار التحكم الأساسية -->
+  <!-- أزرار التحكم -->
   <div class="row g-2">
     <div class="col-md-4">
       <button class="btn btn-info w-100 btn-custom text-white" onclick="copyResult()">
-        <i class="bi bi-files"></i> نسخ النتيجة
+        <i class="bi bi-files"></i> نسخ النتيجة (HTML)
       </button>
     </div>
     <div class="col-md-4">
@@ -189,9 +163,17 @@
       </button>
     </div>
     <div class="col-md-4">
-      <!-- زر تحويل إضافي (إذا أراد المستخدم) -->
       <button class="btn btn-primary w-100 btn-custom" onclick="convertMarkdown()">
         <i class="bi bi-arrow-left-right"></i> تحويل
+      </button>
+    </div>
+  </div>
+  
+  <!-- زر نسخ الكود البرمجي للنتيجة فقط -->
+  <div class="row g-2 mt-2">
+    <div class="col-md-12">
+      <button class="btn btn-secondary w-100 btn-custom" onclick="copyResultCode()">
+        <i class="bi bi-clipboard"></i> نسخ كود النتيجة
       </button>
     </div>
   </div>
@@ -204,52 +186,42 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
 <script>
-  // متغير للاحتفاظ باتجاه النص (rtl أو ltr)
-  let currentDirection = 'rtl'; // الافتراضي عربي
+  let currentDirection = 'rtl';
 
-  // دالة لجعل textarea يتمدد تلقائيًا حسب المحتوى
-  function autoGrow(textarea) {
-    // إعادة الضبط للسماح بحساب المساحة بشكل صحيح
-    textarea.style.height = "auto";
-    // حساب الارتفاع حسب scrollHeight
-    textarea.style.height = (textarea.scrollHeight) + "px";
-  }
-
-  // دالة بسيطة لاكتشاف نسبة الأحرف العربية في النص
-  // إذا كانت أكثر من 30% نعتبره عربي
   function detectTextDirection(text) {
-    let arabicCount = 0;
-    let totalCount = 0;
-    
+    let arabicCount = 0, totalCount = 0;
     for (let char of text) {
-      if (!char.match(/\s/)) { // تجاهل الفراغات
+      if (!char.match(/\s/)) {
         totalCount++;
-        // مجال الأحرف العربية: \u0600 - \u06FF
-        if (char.match(/[\u0600-\u06FF]/)) {
-          arabicCount++;
-        }
+        if (char.match(/[\u0600-\u06FF]/)) arabicCount++;
       }
     }
-    if (totalCount === 0) return 'rtl'; // إذا كان النص فارغًا
-    let ratio = arabicCount / totalCount;
-    return (ratio > 0.3) ? 'rtl' : 'ltr';
+    if (totalCount === 0) return 'rtl';
+    return (arabicCount / totalCount > 0.3) ? 'rtl' : 'ltr';
   }
 
-  // دالة التحويل من ماركداون إلى HTML
   function convertMarkdown() {
     const markdownText = document.getElementById('markdown-input').value;
-    // تحويل النص إلى HTML باستخدام Marked
     const htmlContent = marked.parse(markdownText);
-    
-    // وضع النتيجة في العنصر
     document.getElementById('result').innerHTML = htmlContent;
-    
-    // اكتشاف اتجاه النص
     currentDirection = detectTextDirection(markdownText);
     document.getElementById('result').style.direction = currentDirection;
   }
 
-  // دالة نسخ المحتوى كـ HTML
+  // وظيفة لنسخ محتوى النتيجة (الكود البرمجي للعنصر فقط)
+  function copyResultCode() {
+    const resultDiv = document.getElementById('result');
+    const codeText = resultDiv.outerHTML;
+    const tempTextarea = document.createElement('textarea');
+    tempTextarea.value = codeText;
+    document.body.appendChild(tempTextarea);
+    tempTextarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempTextarea);
+    alert("تم نسخ كود النتيجة بنجاح!");
+  }
+
+  // وظيفة لنسخ محتوى النتيجة (الـ HTML فقط)
   function copyResult() {
     const resultDiv = document.getElementById('result');
     const tempTextarea = document.createElement('textarea');
@@ -258,29 +230,20 @@
     tempTextarea.select();
     document.execCommand('copy');
     document.body.removeChild(tempTextarea);
-    alert("تم نسخ النتيجة بنجاح!");
+    alert("تم نسخ النتيجة (HTML) بنجاح!");
   }
 
-  // دالة حذف النتيجة
   function deleteResult() {
     document.getElementById('result').innerHTML = "";
   }
 
-  // دالة الطباعة في نافذة جديدة (تبقى مفتوحة)
   function printResult() {
     const resultDivContent = document.getElementById('result').innerHTML;
-    // إنشاء نافذة جديدة
     const printWindow = window.open('about:blank', '_blank', 'width=800,height=600');
-
-    // اختيار اللغة والاتجاه
     const langAttr = (currentDirection === 'rtl') ? 'ar' : 'en';
-
-    // نص CSS للنافذة المنبثقة (بدون حواف أو ظلال أو عناوين إضافية)
     const styleContent = `
       @media print {
-        body {
-          -webkit-print-color-adjust: exact;
-        }
+        body { -webkit-print-color-adjust: exact; }
       }
       body {
         font-family: 'Cairo', sans-serif;
@@ -289,35 +252,15 @@
         padding: 0;
         color: #2c3e50;
       }
-      #printResult {
-        padding: 20px;
-      }
-      #printResult h1 {
-        color: #2e4053;
-      }
-      #printResult h2 {
-        color: #2874a6;
-      }
-      #printResult h3 {
-        color: #148f77;
-      }
-      #printResult h4 {
-        color: #9b59b6;
-      }
-      #printResult h5, #printResult h6 {
-        color: #b03a2e;
-      }
-      #printResult p, #printResult li, #printResult td, #printResult th {
-        color: #2c3e50;
-      }
-      #printResult strong {
-        color: #6c3483;
-        font-weight: bold;
-      }
-      #printResult em {
-        color: #d35400;
-        font-style: italic;
-      }
+      #printResult { padding: 20px; }
+      #printResult h1 { color: #2e4053; }
+      #printResult h2 { color: #2874a6; }
+      #printResult h3 { color: #148f77; }
+      #printResult h4 { color: #9b59b6; }
+      #printResult h5, #printResult h6 { color: #b03a2e; }
+      #printResult p, #printResult li, #printResult td, #printResult th { color: #2c3e50; }
+      #printResult strong { color: #6c3483; font-weight: bold; }
+      #printResult em { color: #d35400; font-style: italic; }
       #printResult pre,
       #printResult code {
         background: #e8f0fe;
@@ -335,12 +278,8 @@
         padding: 10px;
         text-align: left;
       }
-      #printResult table thead {
-        background-color: #f2f2f2;
-      }
+      #printResult table thead { background-color: #f2f2f2; }
     `;
-
-    // كتابة المحتوى في صفحة الطباعة
     printWindow.document.write(`
       <html lang="${langAttr}" dir="${currentDirection}">
         <head>
@@ -355,37 +294,23 @@
             ${resultDivContent}
           </div>
           <script>
-            window.onload = function() {
-              window.print();
-            }
+            window.onload = function() { window.print(); }
           <\/script>
         </body>
       </html>
     `);
-    
     printWindow.document.close();
-    // النافذة تبقى مفتوحة
   }
 
-  // دالة للانتقال لأعلى/أسفل الصفحة
-  // إذا كان المستخدم قريبًا من الأعلى، ينقله للأسفل
-  // وإذا كان قريبًا من الأسفل، ينقله للأعلى
   function toggleScroll() {
     const currentScroll = window.scrollY;
     const maxScroll = document.body.scrollHeight - window.innerHeight;
-    // حد اعتباري لمعرفة إن كان المستخدم بالقرب من أعلى الصفحة أو آخرها
     const threshold = 200;
-    
-    // إذا كان المستخدم قريبًا من البداية، انزل لآخر الصفحة
     if (currentScroll < threshold) {
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-    // أو إذا كان المستخدم قريبًا من النهاية، ارجع للأعلى
-    else if (currentScroll > (maxScroll - threshold)) {
+    } else if (currentScroll > (maxScroll - threshold)) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    // خلاف ذلك، إذا كنت في المنتصف مثلاً، نعتبرها أمرًا للذهاب للأعلى
-    else {
+    } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
