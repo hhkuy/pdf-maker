@@ -226,52 +226,48 @@
 <script>
   let currentDirection = 'rtl';
 
-  // تابع موجود مسبقاً (لن نحذفه) لتحديد الاتجاه إجمالاً بناءً على نسبة الأحرف العربية
-  function detectTextDirection(text) {
-    let arabicCount = 0, totalCount = 0;
-    for (let char of text) {
-      if (!char.match(/\s/)) {
-        totalCount++;
-        if (char.match(/[\u0600-\u06FF]/)) arabicCount++;
-      }
+  // دالة جديدة: تحدد اتجاه النص بناءً على أول حرف أبجدي (عربي أو لاتيني)
+  function detectFirstCharDirection(text) {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      // لو السطر فارغ أو كله مسافات/رموز، نجعله RTL افتراضياً
+      return 'rtl';
     }
-    if (totalCount === 0) return 'rtl';
-    return (arabicCount / totalCount > 0.3) ? 'rtl' : 'ltr';
-  }
-
-  // تابع جديد لتحديد اتجاه كل سطر بناءً على أول حرف/كلمة (مع تخطي الأرقام والرموز)
-  function detectLineDirection(line) {
-    let trimmed = line.trim();
-    if (trimmed.length === 0) return 'rtl';
-    
-    // تخطي الأرقام والرموز في البداية
+    // نتجاوز الأرقام والرموز حتى نصل لأول حرف
     let i = 0;
     while (i < trimmed.length && !/[a-zA-Z\u0600-\u06FF]/.test(trimmed[i])) {
       i++;
     }
-    // إن انتهت السلسلة دون أحرف، نجعلها RTL افتراضاً
+    // لو لم نجد أي حرف أبجدي
     if (i === trimmed.length) {
-      return 'rtl';
+      return 'rtl'; // افتراضي
     }
-
-    let firstChar = trimmed[i];
+    const firstChar = trimmed[i];
     return firstChar.match(/[\u0600-\u06FF]/) ? 'rtl' : 'ltr';
   }
 
+  // تم تعديل هذه الدالة لتستخدم detectFirstCharDirection بدل الحساب بالنسب
   function convertMarkdown() {
     const markdownText = document.getElementById('markdown-input').value;
     
-    // بدلاً من الكشف الإجمالي، نقوم بالتعامل مع كل سطر
-    let lines = markdownText.split('\n');
-    let finalHTML = '';
-    for (let line of lines) {
-      let direction = detectLineDirection(line);
-      // تحويل السطر باستخدام Marked
-      let lineHTML = marked.parse(line);
-      // نجمع كل سطر في div له direction خاص به
-      finalHTML += `<div style="direction: ${direction}; text-align: ${direction === 'rtl' ? 'right' : 'left'};">${lineHTML}</div>`;
-    }
-    document.getElementById('result').innerHTML = finalHTML;
+    // 1) تحويل النص كاملاً إلى HTML مرة واحدة:
+    const rawHTML = marked.parse(markdownText);
+    
+    // 2) نحلّل الـHTML في كائن DOM:
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rawHTML, 'text/html');
+    
+    // 3) نطبّق اكتشاف الاتجاه (أول حرف) على العناصر النصيّة الشائعة:
+    const elements = doc.body.querySelectorAll('p, li, blockquote, h1, h2, h3, h4, h5, h6, td, th');
+    elements.forEach(elem => {
+      const dir = detectFirstCharDirection(elem.textContent);
+      elem.style.direction = dir;
+      // ضبط المحاذاة بناءً على الاتجاه
+      elem.style.textAlign = (dir === 'rtl') ? 'right' : 'left';
+    });
+
+    // 4) وضع المحتوى المعدّل في ديف النتيجة
+    document.getElementById('result').innerHTML = doc.body.innerHTML;
   }
 
   // وظيفة لنسخ محتوى النتيجة (الكود البرمجي للعنصر فقط)
@@ -334,10 +330,8 @@
       for (let i = 0; i < watermarkCount; i++) {
         const span = document.createElement('div');
         span.textContent = watermarkText;
-        // نجعل اللون أغمق قليلاً من السابق
         span.style.fontSize = watermarkSize + 'px';
         span.style.color = 'rgba(0,0,0,0.2)';
-        // نجعلها مائلة
         span.style.transform = 'rotate(-30deg)';
         span.style.margin = '10px';
         span.style.pointerEvents = 'none';
@@ -366,7 +360,7 @@
       }
       body {
         font-family: 'Cairo', sans-serif;
-        background-color: #fff; /* هنا جعلنا الخلفية بيضاء */
+        background-color: #fff; /* جعلنا الخلفية بيضاء */
         margin: 0;
         padding: 0;
         color: #2c3e50;
@@ -417,10 +411,8 @@
       }
     `;
 
-    // إعداد محتوى العلامة المائية في صفحة الطباعة
     let watermarkHTML = '';
     if (enabled && watermarkText.trim() !== '') {
-      // سنضيف نفس التكرار الذي اختاره المستخدم
       let items = '';
       for (let i = 0; i < watermarkCount; i++) {
         items += `
